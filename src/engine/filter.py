@@ -141,12 +141,13 @@ def extract_metadata(df: pd.DataFrame) -> dict:
     """Extract distinct cities, neighborhood areas, and cuisines for frontend dropdowns.
 
     Returns:
-        dict with keys: cities, areas, cuisines, budget_tiers, rating_range.
+        dict with keys: cities, areas, city_areas, cuisines, budget_tiers, rating_range.
     """
     if df.empty:
         return {
             "cities": [],
             "areas": [],
+            "city_areas": {},
             "cuisines": [],
             "budget_tiers": BUDGET_ORDER,
             "rating_range": {"min": 1.0, "max": 5.0},
@@ -159,6 +160,13 @@ def extract_metadata(df: pd.DataFrame) -> dict:
         df["location"].dropna().astype(str).str.strip().str.title().unique().tolist()
     ) if "location" in df.columns else []
 
+    city_areas = {}
+    if "city" in df.columns and "location" in df.columns:
+        for c_name, grp in df.groupby(df["city"].dropna().astype(str).str.title()):
+            city_areas[c_name] = sorted(
+                grp["location"].dropna().astype(str).str.strip().str.title().unique().tolist()
+            )
+
     all_cuisines = sorted(set(
         c
         for lst in df.get("cuisines_list", pd.Series(dtype=object))
@@ -168,6 +176,7 @@ def extract_metadata(df: pd.DataFrame) -> dict:
     return {
         "cities": cities,
         "areas": areas,
+        "city_areas": city_areas,
         "cuisines": all_cuisines,
         "budget_tiers": BUDGET_ORDER,
         "rating_range": {"min": 1.0, "max": 5.0},

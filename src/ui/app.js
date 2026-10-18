@@ -133,6 +133,26 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
+      // City-to-areas mapping
+      const cityAreasMap = data.city_areas || {};
+
+      function populateAreasForCity(cityName) {
+        areaSelect.innerHTML = '<option value="">All Areas (Citywide)</option>';
+        const matchedKey = Object.keys(cityAreasMap).find(
+          k => k.toLowerCase() === (cityName || "").toLowerCase()
+        );
+        const areasList = (matchedKey && cityAreasMap[matchedKey]) || data.areas || [];
+        areasList.forEach(area => {
+          const opt = document.createElement("option");
+          opt.value = area;
+          opt.textContent = area;
+          if (area.toLowerCase() === "indiranagar" && (cityName || "").toLowerCase() === "bangalore") {
+            opt.selected = true;
+          }
+          areaSelect.appendChild(opt);
+        });
+      }
+
       // Populate City Select
       if (data.cities && data.cities.length > 0) {
         locationSelect.innerHTML = "";
@@ -145,17 +165,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      // Populate Area Select
-      if (data.areas && data.areas.length > 0) {
-        areaSelect.innerHTML = '<option value="">All Areas (Citywide)</option>';
-        data.areas.forEach(area => {
-          const opt = document.createElement("option");
-          opt.value = area;
-          opt.textContent = area;
-          if (area.toLowerCase() === "indiranagar") opt.selected = true;
-          areaSelect.appendChild(opt);
-        });
-      }
+      // Populate Area Select for active city
+      populateAreasForCity(locationSelect.value);
+
+      // Dynamically refresh area options when city changes
+      locationSelect.addEventListener("change", (e) => {
+        populateAreasForCity(e.target.value);
+      });
 
       // Populate Cuisines
       allCuisines = data.cuisines || [];

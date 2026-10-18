@@ -12,7 +12,9 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     # Standardize column names if needed
     col_mapping = {
         "approx_cost(for two people)": "cost_raw",
+        "average_cost_for_two": "cost_raw",
         "rate": "rating_raw",
+        "aggregate_rating": "rating_raw",
         "listed_in(city)": "neighborhood"
     }
     df = df.rename(columns={k: v for k, v in col_mapping.items() if k in df.columns})
@@ -23,8 +25,11 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["votes"] = 0
 
-    # Step 1: Drop duplicates on restaurant name + location composite key (keep highest votes)
-    subset_cols = [c for c in ["name", "location"] if c in df.columns]
+    # Identify city column early if present
+    city_candidate = next((c for c in ["city", "City", "CITY", "city_name", "City Name"] if c in df.columns), None)
+
+    # Step 1: Drop duplicates on restaurant name + location + city composite key (keep highest votes)
+    subset_cols = [c for c in ["name", "location", city_candidate] if c and c in df.columns]
     if subset_cols:
         df = df.sort_values("votes", ascending=False).drop_duplicates(subset=subset_cols)
 
@@ -34,11 +39,19 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
 
     if "location" in df.columns:
         df["location"] = df["location"].astype(str).str.strip().str.lower()
+    elif "locality" in df.columns:
+        df["location"] = df["locality"].astype(str).str.strip().str.lower()
+    elif "neighborhood" in df.columns:
+        df["location"] = df["neighborhood"].astype(str).str.strip().str.lower()
     else:
-        df["location"] = "bangalore"
+        df["location"] = "unknown"
 
-    # Standardize city to "bangalore" for this dataset
-    df["city"] = "bangalore"
+    # Use dataset city column if available; fallback to "bangalore" for single-city datasets
+    if city_candidate and df[city_candidate].dropna().count() > 0:
+        df["city"] = df[city_candidate].astype(str).str.strip().str.lower()
+        df["city"] = df["city"].replace({"nan": "unknown", "none": "unknown", "": "unknown"})
+    else:
+        df["city"] = "bangalore"
 
     # Step 3: Parse ratings (strip /5, coerce to float, drop NaNs)
     rating_col = "rating_raw" if "rating_raw" in df.columns else ("aggregate_rating" if "aggregate_rating" in df.columns else "rating")

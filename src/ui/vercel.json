@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://foodtrail-backend-production.up.railway.app/api/:path*"
+      "destination": "https://web-production-caa272.up.railway.app/api/:path*"
     }
   ],
   "headers": [

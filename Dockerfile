@@ -19,5 +19,5 @@ ENV PORT=8000
 
 EXPOSE 8000
 
-# Start Uvicorn bound to 0.0.0.0 and dynamic PORT
-CMD ["python", "-c", "import os, uvicorn; uvicorn.run('src.api.main:app', host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))"]
+# Start via Python __main__ — reads PORT from env with no shell syntax needed
+CMD ["python", "-m", "src.api.main"]

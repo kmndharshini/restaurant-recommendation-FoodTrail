@@ -125,3 +125,11 @@ _ui_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui")
 if os.path.isdir(_ui_dir):
     app.mount("/", StaticFiles(directory=_ui_dir, html=True), name="ui")
     logger.info("UI served from %s", _ui_dir)
+
+# ── Entrypoint ────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    logger.info("Starting server on port %d", port)
+    uvicorn.run("src.api.main:app", host="0.0.0.0", port=port)
+

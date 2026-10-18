@@ -27,7 +27,10 @@ def ingest_dataset(dataset_id: str = settings.DATASET_ID) -> pd.DataFrame:
 
     # If raw CSV exists, convert and cache
     if os.path.exists(raw_csv_path):
-        df = pd.read_csv(raw_csv_path)
+        try:
+            df = pd.read_csv(raw_csv_path, low_memory=False)
+        except (UnicodeDecodeError, Exception):
+            df = pd.read_csv(raw_csv_path, encoding="latin-1", low_memory=False)
         os.makedirs("data/raw", exist_ok=True)
         df.to_parquet(raw_parquet_path, index=False)
         return df
